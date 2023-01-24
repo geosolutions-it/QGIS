@@ -765,3 +765,8 @@ QgsDataItem *QgsXyzTileDataItemProvider::createDataItem( const QString &path, Qg
     return new QgsXyzTileRootItem( parentItem, QStringLiteral( "XYZ Tiles" ), QStringLiteral( "xyz:" ) );
   return nullptr;
 }
+
+bool QgsWMSLayerCollectionItem::layerCollection() const
+{
+  return true;
+}
