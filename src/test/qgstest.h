@@ -16,37 +16,37 @@
 #ifndef QGSTEST_H
 #define QGSTEST_H
 
-#include <QDesktopServices>
+#include <QtTest/QTest>
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
-#include <QtTest/QTest>
+#include <QDesktopServices>
 
 #include "qgsapplication.h"
 
-#include "qgis_test.h"
 #include "qgsabstractgeometry.h"
+#include "qgscurve.h"
 #include "qgscircularstring.h"
 #include "qgscompoundcurve.h"
-#include "qgscurve.h"
-#include "qgscurvepolygon.h"
-#include "qgsgeometrycollection.h"
-#include "qgsinterval.h"
 #include "qgslinestring.h"
+#include "qgsgeometrycollection.h"
 #include "qgsmulticurve.h"
 #include "qgsmultilinestring.h"
 #include "qgsmultipoint.h"
-#include "qgsmultipolygon.h"
-#include "qgsmultirenderchecker.h"
 #include "qgsmultisurface.h"
+#include "qgsmultipolygon.h"
 #include "qgspoint.h"
+#include "qgssurface.h"
+#include "qgscurvepolygon.h"
 #include "qgspolygon.h"
-#include "qgsrange.h"
+#include "qgstriangle.h"
 #include "qgsrectangle.h"
 #include "qgsregularpolygon.h"
+#include "qgsrange.h"
+#include "qgsinterval.h"
 #include "qgsrenderchecker.h"
-#include "qgssurface.h"
-#include "qgstriangle.h"
+#include "qgsmultirenderchecker.h"
+#include "qgis_test.h"
 
 #define QGSTEST_MAIN(TestObject) \
   QT_BEGIN_NAMESPACE \
