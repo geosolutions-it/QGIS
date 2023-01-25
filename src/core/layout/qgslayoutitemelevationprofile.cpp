@@ -21,6 +21,10 @@
 #include "qgslayout.h"
 #include "qgsmessagelog.h"
 #include "qgsmaplayerlistutils_p.h"
+#include "qgscurve.h"
+#include "qgsprofilerequest.h"
+#include "qgsprojectelevationproperties.h"
+#include "qgsterrainprovider.h"
 
 ///@cond PRIVATE
 class QgsLayoutItemElevationProfilePlot : public Qgs2DPlot
@@ -394,6 +398,63 @@ void QgsLayoutItemElevationProfile::setLayers( const QList<QgsMapLayer *> &layer
   mLayers = _qgis_listRawToRef( layers );
 }
 
+void QgsLayoutItemElevationProfile::setProfileCurve( QgsCurve *curve )
+{
+  mCurve.reset( curve );
+}
+
+QgsCurve *QgsLayoutItemElevationProfile::profileCurve() const
+{
+  return mCurve.get();
+}
+
+void QgsLayoutItemElevationProfile::setCrs( const QgsCoordinateReferenceSystem &crs )
+{
+  if ( mCrs == crs )
+    return;
+
+  mCrs = crs;
+}
+
+QgsCoordinateReferenceSystem QgsLayoutItemElevationProfile::crs() const
+{
+  return mCrs;
+}
+
+void QgsLayoutItemElevationProfile::setTolerance( double tolerance )
+{
+  if ( mTolerance == tolerance )
+    return;
+
+  mTolerance = tolerance;
+}
+
+double QgsLayoutItemElevationProfile::tolerance() const
+{
+  return mTolerance;
+}
+
+QgsProfileRequest QgsLayoutItemElevationProfile::profileRequest() const
+{
+  QgsProfileRequest req( mCurve ? mCurve.get()->clone() : nullptr );
+
+  req.setCrs( mCrs );
+  req.setTolerance( mTolerance );
+  req.setExpressionContext( createExpressionContext() );
+  if ( mLayout )
+  {
+    if ( QgsProject *project = mLayout->project() )
+    {
+      req.setTransformContext( project->transformContext() );
+      if ( QgsAbstractTerrainProvider *provider = project->elevationProperties()->terrainProvider() )
+      {
+        req.setTerrainProvider( provider->clone() );
+      }
+    }
+  }
+  return req;
+}
+
 void QgsLayoutItemElevationProfile::draw( QgsLayoutItemRenderContext &context )
 {
   // size must be in pixels, not layout units
@@ -407,6 +468,20 @@ bool QgsLayoutItemElevationProfile::writePropertiesToElement( QDomElement &layou
     QDomElement plotElement = doc.createElement( QStringLiteral( "plot" ) );
     mPlot->writeXml( plotElement, doc, rwContext );
     layoutProfileElem.appendChild( plotElement );
+  }
+
+  layoutProfileElem.setAttribute( QStringLiteral( "tolerance" ), mTolerance );
+  if ( mCrs.isValid() )
+  {
+    QDomElement crsElem = doc.createElement( QStringLiteral( "crs" ) );
+    mCrs.writeXml( crsElem, doc );
+    layoutProfileElem.appendChild( crsElem );
+  }
+  if ( mCurve )
+  {
+    QDomElement curveElem = doc.createElement( QStringLiteral( "curve" ) );
+    curveElem.appendChild( doc.createTextNode( mCurve->asWkt( ) ) );
+    layoutProfileElem.appendChild( curveElem );
   }
 
   {
@@ -430,6 +505,32 @@ bool QgsLayoutItemElevationProfile::readPropertiesFromElement( const QDomElement
   {
     mPlot->readXml( plotElement, context );
   }
+
+  const QDomNodeList crsNodeList = itemElem.elementsByTagName( QStringLiteral( "crs" ) );
+  QgsCoordinateReferenceSystem crs;
+  if ( !crsNodeList.isEmpty() )
+  {
+    const QDomElement crsElem = crsNodeList.at( 0 ).toElement();
+    crs.readXml( crsElem );
+  }
+  mCrs = crs;
+
+  const QDomNodeList curveNodeList = itemElem.elementsByTagName( QStringLiteral( "curve" ) );
+  if ( !curveNodeList.isEmpty() )
+  {
+    const QDomElement curveElem = curveNodeList.at( 0 ).toElement();
+    const QgsGeometry curve = QgsGeometry::fromWkt( curveElem.text() );
+    if ( const QgsCurve *curveGeom = qgsgeometry_cast< const QgsCurve * >( curve.constGet() ) )
+    {
+      mCurve.reset( curveGeom->clone() );
+    }
+    else
+    {
+      mCurve.reset();
+    }
+  }
+
+  mTolerance = itemElem.attribute( QStringLiteral( "tolerance" ) ).toDouble();
 
   {
     mLayers.clear();

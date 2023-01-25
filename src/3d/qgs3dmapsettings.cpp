@@ -20,6 +20,7 @@
 #include "qgsdemterraingenerator.h"
 #include "qgsmeshterraingenerator.h"
 #include "qgsonlineterraingenerator.h"
+#include "qgsprojectviewsettings.h"
 #include "qgsvectorlayer3drenderer.h"
 #include "qgsmeshlayer3drenderer.h"
 #include "qgspointcloudlayer3drenderer.h"
@@ -130,11 +131,18 @@ void Qgs3DMapSettings::readXml( const QDomElement &elem, const QgsReadWriteConte
               elemOrigin.attribute( QStringLiteral( "z" ) ).toDouble() );
 
   QDomElement elemExtent = elem.firstChildElement( QStringLiteral( "extent" ) );
-  mExtent = QgsRectangle(
-              elemExtent.attribute( QStringLiteral( "xMin" ) ).toDouble(),
-              elemExtent.attribute( QStringLiteral( "yMin" ) ).toDouble(),
-              elemExtent.attribute( QStringLiteral( "xMax" ) ).toDouble(),
-              elemExtent.attribute( QStringLiteral( "yMax" ) ).toDouble() );
+  if ( !elemExtent.isNull() )
+  {
+    mExtent = QgsRectangle(
+                elemExtent.attribute( QStringLiteral( "xMin" ) ).toDouble(),
+                elemExtent.attribute( QStringLiteral( "yMin" ) ).toDouble(),
+                elemExtent.attribute( QStringLiteral( "xMax" ) ).toDouble(),
+                elemExtent.attribute( QStringLiteral( "yMax" ) ).toDouble() );
+  }
+  else
+  {
+    mExtent = QgsProject::instance()->viewSettings()->fullExtent();
+  }
 
   QDomElement elemCamera = elem.firstChildElement( QStringLiteral( "camera" ) );
   if ( !elemCamera.isNull() )
@@ -723,7 +731,6 @@ void Qgs3DMapSettings::setTerrainGenerator( QgsTerrainGenerator *gen )
 {
   if ( mTerrainGenerator )
   {
-    disconnect( mTerrainGenerator.get(), &QgsTerrainGenerator::extentChanged, this, &Qgs3DMapSettings::terrainGeneratorChanged );
     disconnect( mTerrainGenerator.get(), &QgsTerrainGenerator::terrainChanged, this, &Qgs3DMapSettings::terrainGeneratorChanged );
   }
 
@@ -743,7 +750,6 @@ void Qgs3DMapSettings::setTerrainGenerator( QgsTerrainGenerator *gen )
   }
   gen->setExtent( terrainExtent );
   mTerrainGenerator.reset( gen );
-  connect( mTerrainGenerator.get(), &QgsTerrainGenerator::extentChanged, this, &Qgs3DMapSettings::terrainGeneratorChanged );
   connect( mTerrainGenerator.get(), &QgsTerrainGenerator::terrainChanged, this, &Qgs3DMapSettings::terrainGeneratorChanged );
 
   emit terrainGeneratorChanged();

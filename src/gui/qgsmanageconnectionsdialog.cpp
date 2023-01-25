@@ -262,7 +262,7 @@ bool QgsManageConnectionsDialog::populateConnections()
         settings.beginGroup( QStringLiteral( "/HANA/connections" ) );
         break;
       case XyzTiles:
-        connections = QgsOwsConnection::sTreeOwsConnections->items( {QStringLiteral( "xyz" )} );
+        connections = QgsXyzConnectionSettings::sTreeXyzConnections->items();
         break;
       case ArcgisMapServer:
         settings.beginGroup( QStringLiteral( "/qgis/connections-arcgismapserver" ) );
